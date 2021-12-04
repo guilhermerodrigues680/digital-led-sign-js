@@ -1,6 +1,7 @@
 module.exports = {
+  publicPath: "",
   // desabilita `source maps` para desativar o debug em produção
-  productionSourceMap: false,
+  // productionSourceMap: false,
 
   chainWebpack: (config) => {
     // vue inspect --plugin html
