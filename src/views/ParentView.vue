@@ -49,16 +49,16 @@ export default {
 
   methods: {
     async createOffer() {
-      let offer;
+      let offerDescription;
       try {
-        offer = await this.peerParent.getOffer();
+        offerDescription = await this.peerParent.getOffer();
       } catch (error) {
         console.error(error.message);
         return;
       }
 
-      console.debug(offer);
-      this.offer = JSON.stringify(offer.offerDescription);
+      console.debug(offerDescription);
+      this.offer = JSON.stringify(offerDescription);
     },
 
     readAnswer() {

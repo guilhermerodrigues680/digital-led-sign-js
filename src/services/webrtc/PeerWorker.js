@@ -1,4 +1,5 @@
 import { SERVERS } from "./config";
+import mitt from "mitt";
 
 class PeerWorker {
   /** @type {RTCDataChannel} */
@@ -7,18 +8,25 @@ class PeerWorker {
   _PC;
   /** @type {Array<RTCIceCandidate>} */
   _iceCandidates = [];
+  _iceCandidatesEnd = false;
+  _emitter;
 
   constructor() {
+    this._emitter = mitt();
     this._PC = new RTCPeerConnection(SERVERS);
     this._PC.onconnectionstatechange = (event) => this._onconnectionstatechange(event);
     this._PC.oniceconnectionstatechange = (event) => this._oniceconnectionstatechange(event);
+
+    // https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnectionIceEvent/candidate#value
     this._PC.onicecandidate = (event) => {
       console.log("answer Get candidates for caller, save to db", event.candidate);
       if (event.candidate) {
         // event.candidate.toJSON()
         this._iceCandidates.push(event.candidate);
       } else {
-        console.warn("not ice candidate: ", { event });
+        console.debug("não há mais candidatos para esta sessão de negociação.");
+        this._iceCandidatesEnd = true;
+        this._emitter.emit("ice-candidates-end", this._iceCandidatesEnd);
       }
     };
     this._PC.ondatachannel = (event) => {
@@ -59,20 +67,29 @@ class PeerWorker {
     const answerDescription = await this._PC.createAnswer();
     await this._PC.setLocalDescription(answerDescription);
 
-    if (this._iceCandidates.length == 0) {
-      const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-      await sleep(1500);
-    }
+    return new Promise((resolve) => {
+      if (this._iceCandidatesEnd) {
+        resolve({
+          remoteDescription: this._PC.remoteDescription,
+          localDescription: this._PC.localDescription,
+        });
+        return;
+      }
 
+      // Se não tem todos os candidatos espera ter todos e retorna
+      const iceCandidatesEndHandler = () => {
+        this._emitter.off("ice-candidates-end", iceCandidatesEndHandler);
+        resolve({
+          remoteDescription: this._PC.remoteDescription,
+          localDescription: this._PC.localDescription,
+        });
+      };
+      this._emitter.on("ice-candidates-end", iceCandidatesEndHandler);
+    });
     // const offerICECallback = (ice) => {
     //   console.debug("offerICECallback called");
     //   PC.addIceCandidate(new RTCIceCandidate(ice));
     // };
-
-    return {
-      remoteDescription: this._PC.remoteDescription,
-      localDescription: this._PC.localDescription,
-    };
   }
 }
 

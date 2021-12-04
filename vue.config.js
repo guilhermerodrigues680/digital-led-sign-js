@@ -14,5 +14,7 @@ module.exports = {
 
   devServer: {
     https: true,
+    // public: "mytunnel.com.br",
+    // port: 8888,
   },
 };
