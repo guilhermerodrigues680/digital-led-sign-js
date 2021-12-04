@@ -14,7 +14,7 @@
 
 <script>
 // JS
-import { peerWorker } from "@/services/webrtc";
+import { PeerWorker } from "@/services/webrtc";
 
 export default {
   name: "WorkerView",
@@ -22,13 +22,19 @@ export default {
   data: () => ({
     workerOffer: "",
     offer: "",
+    /** @type {PeerWorker} */
+    peerWorker: null,
   }),
+
+  mounted() {
+    this.peerWorker = new PeerWorker();
+  },
 
   methods: {
     async createAnswer() {
       const offerDescription = JSON.parse(this.offer);
-      const answer = await peerWorker.answerOffer(offerDescription);
-      this.workerOffer = JSON.stringify(answer.answerDescription);
+      const answer = await this.peerWorker.answerOffer(offerDescription);
+      this.workerOffer = JSON.stringify(answer.localDescription);
     },
   },
 };

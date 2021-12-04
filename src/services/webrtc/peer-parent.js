@@ -1,140 +1,87 @@
-import { PC } from "./config";
+import { SERVERS } from "./config";
+class PeerParent {
+  /** @type {RTCDataChannel} */
+  _channelG;
+  /** @type {RTCPeerConnection} */
+  _PC;
+  /** @type {Array<RTCIceCandidate>} */
+  _iceCandidates = [];
 
-// let localStream = null;
-// let remoteStream = null;
-let channelG;
-
-PC.ondatachannel = (event) => {
-  console.log("ondatachannel", "Data channel is created!");
-  const { channel } = event;
-  channelG = channel;
-  console.debug("chanel ondatachannel", channel);
-
-  channel.onopen = (event) => {
-    console.log("Data channel is open and ready to be used.");
-    console.log("onopen", event);
-  };
-
-  channel.onmessage = (event) => {
-    console.log("onmessage", event);
-    //alert(event.data);
-  };
-};
-
-PC.onconnectionstatechange = (event) => {
-  event;
-  //document.getElementById("connectionState").innerText = PC.connectionState;
-  console.log("onconnectionstatechange", PC.connectionState);
-};
-
-PC.oniceconnectionstatechange = (event) => {
-  event;
-  //document.getElementById("iceConnectionState").innerText = PC.iceConnectionState;
-  console.log("oniceconnectionstatechange", PC.iceConnectionState);
-};
-
-// async function setupMediaSources() {
-//   // Pergunta ao navegador se há acesso a câmera
-//   localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-//   console.debug(localStream);
-//   remoteStream = new MediaStream();
-
-//   // Push tracks from local stream to peer PC
-//   // As tracks são o video e o audio
-//   localStream.getTracks().forEach((track) => {
-//     PC.addTrack(track, localStream);
-//   });
-
-//   // Pull tracks from remote stream, add to video stream
-//   PC.ontrack = (event) => {
-//     console.debug("PC.ontrack", event);
-//     event.streams[0].getTracks().forEach((track) => {
-//       remoteStream.addTrack(track);
-//     });
-//   };
-
-//   return {
-//     localStream,
-//     remoteStream,
-//   };
-// }
-
-function createOffer() {
-  return new Promise((resolve) => {
-    let offerDescription;
-    // TODO
-    const callId = "xxxxx";
-    console.debug("callId", callId);
-
-    const channel = PC.createDataChannel("data");
-    channelG = channel;
-    console.debug("chanel createOffer", channel);
-
-    channel.onopen = (event) => {
-      console.log("onopen", event);
-    };
-
-    channel.onmessage = (event) => {
-      console.log("onmessage", event);
-    };
-
-    // Get candidates for caller, save to db
-    PC.onicecandidate = (event) => {
+  constructor() {
+    this._PC = new RTCPeerConnection(SERVERS);
+    this._PC.onconnectionstatechange = (event) => this._onconnectionstatechange(event);
+    this._PC.oniceconnectionstatechange = (event) => this._oniceconnectionstatechange(event);
+    this._PC.onicecandidate = (event) => {
       console.log("Get candidates for caller, save to db", event.candidate);
-      // event.candidate.toJSON()
-      resolve({ offerDescription });
+      if (event.candidate) {
+        // event.candidate.toJSON()
+        this._iceCandidates.push(event.candidate);
+      } else {
+        console.warn("not ice candidate: ", { event });
+      }
     };
 
-    // Create offer
-    PC.createOffer()
-      .then((offerDesc) => {
-        offerDescription = offerDesc;
-        PC.setLocalDescription(offerDesc)
-          .then((res) => console.debug(res))
-          .catch((err) => console.error(err));
-      })
-      .catch((err) => console.error(err));
+    this._channelG = this._PC.createDataChannel("data");
+    this._channelG.onopen = (event) => console.log("onopen", event);
+    this._channelG.onmessage = (event) => console.log("onmessage", event);
+    this._channelG.onclose = (event) => console.debug("onclose", { event });
+    this._channelG.onerror = (event) => console.debug("onerror", { event });
+    this._channelG.onbufferedamountlow = (event) => console.debug("onbufferedamountlow", { event });
+  }
+
+  // Ouvidores de Eventos
+  _onconnectionstatechange(event) {
+    console.log("onconnectionstatechange", { event }, this._PC.connectionState);
+  }
+  _oniceconnectionstatechange(event) {
+    console.log("oniceconnectionstatechange", { event }, this._PC.iceConnectionState);
+  }
+
+  async _createOffer() {
+    console.debug("_createOffer");
+    if (this._PC.localDescription) {
+      return this._PC.localDescription;
+    }
+    const offerDescription = await this._PC.createOffer();
+    await this._PC.setLocalDescription(offerDescription);
+  }
+
+  async getOffer() {
+    this._createOffer();
+    if (this._iceCandidates.length == 0) {
+      const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+      await sleep(1500);
+    }
+
+    return {
+      offerDescription: this._PC.localDescription,
+    };
 
     // const answeredCallback = (answer) => {
     //   console.debug("answeredCallback");
-    //   if (!PC.currentRemoteDescription) {
+    //   if (!this._PC.currentRemoteDescription) {
     //     const answerDescription = new RTCSessionDescription(answer);
-    //     PC.setRemoteDescription(answerDescription);
+    //     this._PC.setRemoteDescription(answerDescription);
     //   }
     // };
 
     // const answeredICECallback = (ice) => {
     //   console.debug("answeredICECallback");
     //   const candidate = new RTCIceCandidate(ice);
-    //   PC.addIceCandidate(candidate);
+    //   this._PC.addIceCandidate(candidate);
     // };
+  }
 
-    // return {
-    //   callId,
-    //   offerDescription,
-    //   answeredCallback,
-    //   answeredICECallback,
-    // };
-  });
+  async step_4_accept_answer(answer) {
+    //const answer = JSON.parse(getInputAnswerText());
+    const answerDescription = new RTCSessionDescription(answer);
+    await this._PC.setRemoteDescription(answerDescription);
+    console.debug("step_4_accept_answer OK!");
+  }
+
+  send_text(text) {
+    this._channelG.send(text);
+  }
 }
 
-function step_4_accept_answer(answer) {
-  //const answer = JSON.parse(getInputAnswerText());
-  const answerDescription = new RTCSessionDescription(answer);
-  PC.setRemoteDescription(answerDescription)
-    .then((res) => console.debug("step_4_accept_answer OK!", res))
-    .catch((err) => console.error("step_4_accept_answer err", err));
-}
-
-function send_text(text) {
-  // const text = getChatMsg();
-  // addMsgInChatHistory(text);
-  channelG.send(text);
-}
-
-export default {
-  // setupMediaSources,
-  createOffer,
-  send_text,
-  step_4_accept_answer,
-};
+export default PeerParent;

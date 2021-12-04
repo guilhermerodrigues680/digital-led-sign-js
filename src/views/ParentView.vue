@@ -20,7 +20,7 @@
 
 <script>
 // JS
-import { peerParent } from "@/services/webrtc";
+import { PeerParent } from "@/services/webrtc";
 
 export default {
   name: "ParentView",
@@ -28,17 +28,30 @@ export default {
   data: () => ({
     offer: "",
     answer: "",
+    /** @type {Array<PeerParent>} */
+    peerParentListFreeze: [null],
   }),
 
+  computed: {
+    peerParent() {
+      return this.peerParentListFreeze[0];
+    },
+  },
+
   mounted() {
-    // peerParent.setupMediaSources();
+    this.peerParentListFreeze = Object.freeze([new PeerParent()]);
+    console.debug(this.peerParent);
+  },
+
+  beforeDestroy() {
+    // this.peerParent && this.peerParent.destroy();
   },
 
   methods: {
     async createOffer() {
       let offer;
       try {
-        offer = await peerParent.createOffer();
+        offer = await this.peerParent.getOffer();
       } catch (error) {
         console.error(error.message);
         return;
@@ -50,11 +63,11 @@ export default {
 
     readAnswer() {
       const answer = JSON.parse(this.answer);
-      peerParent.step_4_accept_answer(answer);
+      this.peerParent.step_4_accept_answer(answer);
     },
 
     sendText() {
-      peerParent.send_text("texto");
+      this.peerParent.send_text("texto");
     },
   },
 };

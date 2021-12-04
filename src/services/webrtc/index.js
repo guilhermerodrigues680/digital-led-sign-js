@@ -1,2 +1,2 @@
-export { default as peerParent } from "./peer-parent";
-export { default as peerWorker } from "./peer-worker";
+export { default as PeerParent } from "./peer-parent";
+export { default as PeerWorker } from "./peer-worker";

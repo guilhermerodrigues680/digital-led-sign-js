@@ -8,7 +8,4 @@ const SERVERS = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
 };
 
-// Global State
-const PC = new RTCPeerConnection(SERVERS);
-
-export { PC };
+export { SERVERS };
