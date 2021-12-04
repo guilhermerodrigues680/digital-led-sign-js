@@ -1,6 +1,12 @@
 # digital-led-sign-js
 
 ## Project setup
+
+```sh
+➜ nvm use v14.18.1
+Now using node v14.18.1 (npm v8.1.4)
+```
+
 ```
 npm install
 ```
