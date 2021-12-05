@@ -13,10 +13,16 @@ class PeerParent {
   _emitter;
   /** @type {ClientSignalingServer} */
   _clientSignalingServer;
+  /** @type {string} */
+  _clientSignalingServerId = null;
 
   constructor() {
     this._emitter = mitt();
     this._clientSignalingServer = new ClientSignalingServer();
+    this._clientSignalingServer.on("client-id", (clientId) => {
+      this._clientSignalingServerId = clientId;
+    });
+
     this._PC = new RTCPeerConnection(SERVERS);
     this._PC.onconnectionstatechange = (event) => this._onconnectionstatechange(event);
     this._PC.oniceconnectionstatechange = (event) => this._oniceconnectionstatechange(event);
@@ -73,6 +79,7 @@ class PeerParent {
       const iceCandidatesEndHandler = () => {
         this._emitter.off("ice-candidates-end", iceCandidatesEndHandler);
         resolve(this._PC.localDescription);
+        this._clientSignalingServer.sendRTCSessionDescriptionOffer(this._PC.localDescription);
       };
       this._emitter.on("ice-candidates-end", iceCandidatesEndHandler);
     });

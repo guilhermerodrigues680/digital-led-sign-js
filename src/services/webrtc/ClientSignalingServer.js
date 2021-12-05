@@ -1,14 +1,30 @@
+import mitt from "mitt";
+
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 class ClientSignalingServer {
   _url;
+  _emitter;
   /** @type {WebSocket} */
   _ws = null;
   _destroyed = false;
 
   constructor() {
     this._url = "ws://localhost:8989/ws/signaling-server";
+    this._emitter = mitt();
     this._tryConection();
+  }
+
+  //
+  // Atributos get/set
+  //
+
+  get on() {
+    return this._emitter.on;
+  }
+
+  get off() {
+    return this._emitter.off;
   }
 
   //
@@ -53,8 +69,26 @@ class ClientSignalingServer {
   }
 
   _messageHandler(event) {
-    const { data } = event;
-    console.debug("[ClientSignalingServer] message:", { data });
+    const { data: eventData } = event;
+    console.debug("[ClientSignalingServer] eventData:", { eventData });
+
+    let message = { type: "", data: {} };
+    try {
+      message = JSON.parse(eventData);
+    } catch (error) {
+      console.warn("Erro mensagem não JSON: ", eventData);
+      return;
+    }
+
+    console.debug("[ClientSignalingServer] message:", message);
+    switch (message.type) {
+      case "client-id":
+        this._emitter.emit("client-id", message.data);
+        break;
+      default:
+        console.warn("[ClientSignalingServer] messagem desconhecida:", message);
+        break;
+    }
   }
 
   _errorHandler(event) {
@@ -93,6 +127,14 @@ class ClientSignalingServer {
         reject(new Error(`WebSocket connection to ${ws.url} failed`));
       };
     });
+  }
+
+  sendRTCSessionDescriptionOffer(data) {
+    const message = {
+      type: "rtc-session-description-offer",
+      data,
+    };
+    this._ws.send(JSON.stringify(message));
   }
 
   destroy() {
