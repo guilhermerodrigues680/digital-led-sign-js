@@ -21,6 +21,7 @@ class PeerParent {
     this._clientSignalingServer = new ClientSignalingServer();
     this._clientSignalingServer.on("client-id", (clientId) => {
       this._clientSignalingServerId = clientId;
+      this._emitter.emit("client-id", this._clientSignalingServerId);
     });
     this._clientSignalingServer.on("rtc-session-description-answer", (answerDescription) => {
       this.step_4_accept_answer(answerDescription);
@@ -49,6 +50,18 @@ class PeerParent {
     this._channelG.onclose = (event) => console.debug("onclose", { event });
     this._channelG.onerror = (event) => console.debug("onerror", { event });
     this._channelG.onbufferedamountlow = (event) => console.debug("onbufferedamountlow", { event });
+  }
+
+  //
+  // Atributos get/set
+  //
+
+  get on() {
+    return this._emitter.on;
+  }
+
+  get off() {
+    return this._emitter.off;
   }
 
   // Ouvidores de Eventos

@@ -11,6 +11,14 @@ const routes = [
     component: Home,
   },
   {
+    path: "/parent",
+    component: () => import("@/views/ParentView.vue"),
+  },
+  {
+    path: "/worker",
+    component: () => import("@/views/WorkerView.vue"),
+  },
+  {
     path: "/manual/parent",
     component: () => import("@/views/ManualParentView.vue"),
   },
