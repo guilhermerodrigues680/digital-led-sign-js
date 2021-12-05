@@ -1,5 +1,6 @@
 import { SERVERS } from "./config";
 import mitt from "mitt";
+import ClientSignalingServer from "./ClientSignalingServer";
 
 class PeerParent {
   /** @type {RTCDataChannel} */
@@ -10,9 +11,12 @@ class PeerParent {
   _iceCandidates = [];
   _iceCandidatesEnd = false;
   _emitter;
+  /** @type {ClientSignalingServer} */
+  _clientSignalingServer;
 
   constructor() {
     this._emitter = mitt();
+    this._clientSignalingServer = new ClientSignalingServer();
     this._PC = new RTCPeerConnection(SERVERS);
     this._PC.onconnectionstatechange = (event) => this._onconnectionstatechange(event);
     this._PC.oniceconnectionstatechange = (event) => this._oniceconnectionstatechange(event);
@@ -97,6 +101,10 @@ class PeerParent {
 
   send_text(text) {
     this._channelG.send(text);
+  }
+
+  destroy() {
+    this._clientSignalingServer.destroy();
   }
 }
 

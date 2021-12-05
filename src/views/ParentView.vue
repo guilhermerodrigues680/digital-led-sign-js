@@ -44,7 +44,7 @@ export default {
   },
 
   beforeDestroy() {
-    // this.peerParent && this.peerParent.destroy();
+    this.peerParent && this.peerParent.destroy();
   },
 
   methods: {
