@@ -22,6 +22,9 @@ class PeerParent {
     this._clientSignalingServer.on("client-id", (clientId) => {
       this._clientSignalingServerId = clientId;
     });
+    this._clientSignalingServer.on("rtc-session-description-answer", (answerDescription) => {
+      this.step_4_accept_answer(answerDescription);
+    });
 
     this._PC = new RTCPeerConnection(SERVERS);
     this._PC.onconnectionstatechange = (event) => this._onconnectionstatechange(event);

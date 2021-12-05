@@ -85,6 +85,12 @@ class ClientSignalingServer {
       case "client-id":
         this._emitter.emit("client-id", message.data);
         break;
+      case "res-get-rtc-session-description-offer":
+        this._emitter.emit("res-get-rtc-session-description-offer", message.data);
+        break;
+      case "rtc-session-description-answer":
+        this._emitter.emit("rtc-session-description-answer", message.data);
+        break;
       default:
         console.warn("[ClientSignalingServer] messagem desconhecida:", message);
         break;
@@ -133,6 +139,22 @@ class ClientSignalingServer {
     const message = {
       type: "rtc-session-description-offer",
       data,
+    };
+    this._ws.send(JSON.stringify(message));
+  }
+
+  sendRTCSessionDescriptionAnswer(rtcSessionDescriptionAnswer, clientIdOffer) {
+    const message = {
+      type: "rtc-session-description-answer",
+      data: { rtcSessionDescriptionAnswer, clientIdOffer },
+    };
+    this._ws.send(JSON.stringify(message));
+  }
+
+  sendGetClientRTCSessionDescriptionOffer(clientId) {
+    const message = {
+      type: "get-rtc-session-description-offer",
+      data: { clientId },
     };
     this._ws.send(JSON.stringify(message));
   }

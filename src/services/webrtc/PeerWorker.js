@@ -1,5 +1,6 @@
 import { SERVERS } from "./config";
 import mitt from "mitt";
+import ClientSignalingServer from "./ClientSignalingServer";
 
 class PeerWorker {
   /** @type {RTCDataChannel} */
@@ -10,9 +11,18 @@ class PeerWorker {
   _iceCandidates = [];
   _iceCandidatesEnd = false;
   _emitter;
+  /** @type {ClientSignalingServer} */
+  _clientSignalingServer;
+  /** @type {string} */
+  _clientSignalingServerId = null;
 
   constructor() {
     this._emitter = mitt();
+    this._clientSignalingServer = new ClientSignalingServer();
+    this._clientSignalingServer.on("client-id", (clientId) => {
+      this._clientSignalingServerId = clientId;
+    });
+
     this._PC = new RTCPeerConnection(SERVERS);
     this._PC.onconnectionstatechange = (event) => this._onconnectionstatechange(event);
     this._PC.oniceconnectionstatechange = (event) => this._oniceconnectionstatechange(event);
@@ -90,6 +100,21 @@ class PeerWorker {
     //   console.debug("offerICECallback called");
     //   PC.addIceCandidate(new RTCIceCandidate(ice));
     // };
+  }
+
+  answerParentOffer(clientId) {
+    console.debug("answerParentOffer", clientId);
+    const resCallback = async (offerDescription) => {
+      this._clientSignalingServer.off("res-get-rtc-session-description-offer", resCallback);
+      console.debug(offerDescription);
+      const answer = await this.answerOffer(offerDescription);
+      this._clientSignalingServer.sendRTCSessionDescriptionAnswer(
+        answer.localDescription,
+        clientId
+      );
+    };
+    this._clientSignalingServer.on("res-get-rtc-session-description-offer", resCallback);
+    this._clientSignalingServer.sendGetClientRTCSessionDescriptionOffer(clientId);
   }
 }
 

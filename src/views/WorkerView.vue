@@ -4,6 +4,12 @@
 
     <div>
       <h2>Criar uma resposta</h2>
+      <input v-model="parentId" type="text" placeholder="parentId" />
+      <button @click="connectToParent()">connectToParent</button>
+    </div>
+
+    <div>
+      <h2>Criar uma resposta</h2>
       <textarea placeholder="offer" v-model="offer"></textarea>
       <button @click="createAnswer()">criar reposta</button>
     </div>
@@ -24,6 +30,7 @@ export default {
     offer: "",
     /** @type {PeerWorker} */
     peerWorker: null,
+    parentId: "",
   }),
 
   mounted() {
@@ -35,6 +42,10 @@ export default {
       const offerDescription = JSON.parse(this.offer);
       const answer = await this.peerWorker.answerOffer(offerDescription);
       this.workerOffer = JSON.stringify(answer.localDescription);
+    },
+
+    connectToParent() {
+      this.peerWorker.answerParentOffer(this.parentId);
     },
   },
 };
