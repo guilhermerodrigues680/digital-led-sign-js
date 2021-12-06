@@ -11,7 +11,7 @@ const db = {
 /** @type {Map<string, WebSocket} */
 const clients = new Map();
 
-const PORT = 8989;
+const PORT = 8888;
 const wss = new WebSocketServer({ port: PORT, path: "/ws/signaling-server" });
 
 wss.on("connection", (ws, req) => {
