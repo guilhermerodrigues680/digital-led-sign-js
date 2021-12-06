@@ -36,3 +36,7 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 ### References
 
 - [WebRTC in 100 Seconds // Build a Video Chat app from Scratch](https://www.youtube.com/watch?v=WmR9IMUD_CY&t=202s)
+
+https://github.com/mebjas/html5-qrcode
+https://minhazav.medium.com/qr-code-scanner-using-html-and-javascript-3895a0c110cd
+https://github.com/nimiq/qr-scanner

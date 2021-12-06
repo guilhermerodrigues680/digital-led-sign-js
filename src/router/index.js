@@ -15,7 +15,11 @@ const routes = [
     component: () => import("@/views/ParentView.vue"),
   },
   {
-    path: "/worker",
+    path: "/code/:parentId",
+    redirect: "/worker/:parentId",
+  },
+  {
+    path: "/worker/:parentId?",
     component: () => import("@/views/WorkerView.vue"),
   },
   {

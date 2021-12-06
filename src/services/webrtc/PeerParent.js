@@ -1,6 +1,7 @@
 import { SERVERS } from "./config";
 import mitt from "mitt";
 import ClientSignalingServer from "./ClientSignalingServer";
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 class PeerParent {
   /** @type {RTCDataChannel} */
@@ -84,10 +85,17 @@ class PeerParent {
   async getOffer() {
     await this._createOffer();
 
+    // TODO: Aqui não aguarda um id, guarda na verdade a conexao estável
+    // Aguarda um id do servidor de sinalizacao
+    while (!this._clientSignalingServerId) {
+      await sleep(250);
+    }
+
     return new Promise((resolve) => {
       // Se já tem todos os candidatos retorna
       if (this._iceCandidatesEnd) {
         resolve(this._PC.localDescription);
+        this._clientSignalingServer.sendRTCSessionDescriptionOffer(this._PC.localDescription);
         return;
       }
 

@@ -4,7 +4,11 @@
 
     <div>
       <h2>qrcode</h2>
-      {{ qrcode }}
+      {{ qrvalueUrl }}
+
+      <canvas ref="qr"></canvas>
+
+      <button @click="createOffer()">createOffer()</button>
     </div>
   </div>
 </template>
@@ -12,6 +16,11 @@
 <script>
 // JS
 import { PeerParent } from "@/services/webrtc";
+// https://medium.com/geekculture/few-ways-to-generate-qr-code-using-javascript-54b6b5220c4f
+import qrcodejs from "qrcodejs";
+import QRious from "qrious";
+console.debug(qrcodejs);
+console.debug(QRious);
 
 export default {
   name: "ParentView",
@@ -19,26 +28,36 @@ export default {
   data: () => ({
     /** @type {Array<PeerParent>} */
     peerParentListFreeze: [null],
-    qrcode: "",
+    qrious: null,
+    qrvalue: null,
   }),
 
   computed: {
     peerParent() {
       return this.peerParentListFreeze[0];
     },
+    qrvalueUrl() {
+      const url = new URL(window.location.origin);
+      url.hash = `/code/${this.qrvalue}`;
+      return url.href;
+    },
   },
 
   mounted() {
+    this.qrious = new QRious({ element: this.$refs.qr, value: "" });
     this.peerParentListFreeze = Object.freeze([new PeerParent()]);
-    console.debug(this.peerParent);
-    this.peerParent.on("client-id", (clientId) => {
-      this.qrcode = clientId;
-    });
+    this.peerParent.on("client-id", (clientId) => (this.qrvalue = clientId));
     this.createOffer();
   },
 
   beforeDestroy() {
     this.peerParent && this.peerParent.destroy();
+  },
+
+  watch: {
+    qrvalue() {
+      this.qrious.value = this.qrvalueUrl;
+    },
   },
 
   methods: {

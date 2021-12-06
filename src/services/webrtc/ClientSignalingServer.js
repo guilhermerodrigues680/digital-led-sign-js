@@ -10,7 +10,7 @@ class ClientSignalingServer {
   _destroyed = false;
 
   constructor() {
-    this._url = "ws://localhost:8989/ws/signaling-server";
+    this._url = new URL("/ws/signaling-server", process.env.VUE_APP_SIGNALING_SERVER_BASE_URL).href;
     this._emitter = mitt();
     this._tryConection();
   }
