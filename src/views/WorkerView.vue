@@ -17,6 +17,16 @@
     <div>
       {{ scannedParentId }}
     </div>
+
+    <form @submit.prevent="formSendMessageSubmit($event)">
+      <input name="message" type="text" />
+      <button>Enviar mensagem</button>
+    </form>
+
+    <div>
+      parentMessage:
+      {{ parentMessage }}
+    </div>
   </div>
 </template>
 
@@ -39,11 +49,13 @@ export default {
     scannedParentId: null,
     /** @type {Html5Qrcode} */
     html5QrCode: null,
+    parentMessage: "",
   }),
 
   created() {
     this.peerWorker = new PeerWorker();
     this.peerWorker.on("connection-state-change", (connState) => (this.peerConnState = connState));
+    this.peerWorker.on("channel-message", this.channelMessageHandler);
     if (this.validateParentId(this.parentId)) {
       this.scannedParentId = this.parentId;
     } else {
@@ -69,7 +81,7 @@ export default {
   },
 
   beforeDestroy() {
-    // this.peerWorker && this.peerWorker.destroy();
+    this.peerWorker.destroy();
     if (this.html5QrCode.isScanning) {
       console.debug("this.html5QrCode.stop()");
       this.html5QrCode.stop();
@@ -133,6 +145,18 @@ export default {
       if (!errorMessage.includes("NotFoundException")) {
         console.error(errorMessage, error);
       }
+    },
+
+    formSendMessageSubmit(event) {
+      /** @type {HTMLFormElement} */
+      const form = event.target;
+
+      this.peerWorker.sendMessage(form.elements.message.value);
+    },
+
+    channelMessageHandler(data) {
+      console.debug(data, this);
+      this.parentMessage = data.message;
     },
   },
 };

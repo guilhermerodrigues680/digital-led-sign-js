@@ -19,7 +19,7 @@
               <li>Caso seu celular não leia qrcode, acesse nossa página para leitura do qrcode</li>
               <li>
                 Caso seu dispositivo não possua uma camera, acesse o link a partir do seu celular:
-                {{ qrvalueUrl }}
+                <a :href="qrvalueUrl" target="_blank">{{ qrvalueUrl }}</a>
               </li>
             </ol>
           </div>
@@ -27,7 +27,10 @@
         <div v-show="!qrvalue">Obtendo codigo...</div>
       </div>
 
-      <button @click="createOffer()">createOffer()</button>
+      <div>
+        workerMessage:
+        {{ workerMessage }}
+      </div>
     </div>
   </div>
 </template>
@@ -48,6 +51,7 @@ export default {
     peerConnState: {},
     qrious: null,
     qrvalue: null,
+    workerMessage: "",
   }),
 
   computed: {
@@ -63,11 +67,12 @@ export default {
     this.peerParent = new PeerParent();
     this.peerParent.on("client-id", (clientId) => (this.qrvalue = clientId));
     this.peerParent.on("connection-state-change", (connState) => (this.peerConnState = connState));
+    this.peerParent.on("channel-message", this.channelMessageHandler);
     this.createOffer();
   },
 
   beforeDestroy() {
-    this.peerParent && this.peerParent.destroy();
+    this.peerParent.destroy();
   },
 
   watch: {
@@ -87,6 +92,16 @@ export default {
       }
 
       console.debug(offerDescription);
+    },
+
+    channelMessageHandler(data) {
+      console.debug(data, this);
+      this.workerMessage = data.message;
+      this.sendMessage("OK! Recebi a mensagem!");
+    },
+
+    sendMessage(message) {
+      this.peerParent.sendMessage(message);
     },
   },
 };

@@ -45,11 +45,11 @@ class PeerParent {
       }
     };
 
-    this._channelG = this._PC.createDataChannel("data");
-    this._channelG.onopen = (event) => console.log("onopen", event);
-    this._channelG.onmessage = (event) => console.log("onmessage", event);
-    this._channelG.onclose = (event) => console.debug("onclose", { event });
-    this._channelG.onerror = (event) => console.debug("onerror", { event });
+    this._channelG = this._PC.createDataChannel("digitalledsignchannel");
+    this._channelG.onopen = this._dataChannelOpen.bind(this);
+    this._channelG.onmessage = this._dataChannelMessage.bind(this);
+    this._channelG.onclose = this._dataChannelClose.bind(this);
+    this._channelG.onerror = this._dataChannelError.bind(this);
     this._channelG.onbufferedamountlow = (event) => console.debug("onbufferedamountlow", { event });
   }
 
@@ -71,10 +71,30 @@ class PeerParent {
     console.log("Connection state change", connectionState, iceConnectionState);
     this._emitter.emit("connection-state-change", { connectionState, iceConnectionState });
   }
+
   _oniceconnectionstatechange() {
     const { connectionState, iceConnectionState } = this._PC;
     console.log("ICE connection state change", connectionState, iceConnectionState);
     this._emitter.emit("connection-state-change", { connectionState, iceConnectionState });
+  }
+
+  _dataChannelOpen() {
+    console.debug("Data channel is open.");
+  }
+
+  _dataChannelClose() {
+    console.debug("Data channel is close.");
+  }
+
+  _dataChannelMessage(event) {
+    const { data: eventData } = event;
+    console.debug("Data channel message.", { eventData, this: this });
+    const message = eventData;
+    this._emitter.emit("channel-message", { message });
+  }
+
+  _dataChannelError(event) {
+    console.debug("Data channel error.", { event });
   }
 
   async _createOffer() {
@@ -134,11 +154,12 @@ class PeerParent {
     console.debug("step_4_accept_answer OK!");
   }
 
-  send_text(text) {
-    this._channelG.send(text);
+  sendMessage(message) {
+    this._channelG.send(message);
   }
 
   destroy() {
+    this._emitter.all.clear();
     this._clientSignalingServer.destroy();
   }
 }

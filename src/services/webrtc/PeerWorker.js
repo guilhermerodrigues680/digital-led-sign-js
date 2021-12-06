@@ -6,7 +6,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 class PeerWorker {
   /** @type {RTCDataChannel} */
-  _channelG;
+  _dataChannel;
   /** @type {RTCPeerConnection} */
   _PC;
   /** @type {Array<RTCIceCandidate>} */
@@ -41,29 +41,18 @@ class PeerWorker {
         this._emitter.emit("ice-candidates-end", this._iceCandidatesEnd);
       }
     };
+
+    // https://developer.mozilla.org/pt-BR/docs/Web/API/WebRTC_API/Simple_RTCDataChannel_sample
     this._PC.ondatachannel = (event) => {
-      console.log("ondatachannel", "Data channel is created!");
-      const { channel } = event;
-      this._channelG = channel;
-      console.debug("chanel ondatachannel", channel);
+      this._dataChannel = event.channel;
+      console.debug("chanel ondatachannel", this._dataChannel);
 
-      channel.onopen = (event) => {
-        console.log("Data channel is open and ready to be used.");
-        console.log("onopen", event);
-      };
-
-      channel.onmessage = (event) => {
-        console.log("onmessage", event);
-        //alert(event.data);
-      };
+      this._dataChannel.onopen = this._dataChannelOpen.bind(this);
+      this._dataChannel.onclose = this._dataChannelClose.bind(this);
+      this._dataChannel.onmessage = this._dataChannelMessage.bind(this);
+      this._dataChannel.onerror = this._dataChannelError.bind(this);
+      // this._dataChannel.onbufferedamountlow = (event) => console.debug("onbufferedamountlow", { event });
     };
-
-    // this._channelG = this._PC.createDataChannel("data");
-    // this._channelG.onopen = (event) => console.log("onopen", event);
-    // this._channelG.onmessage = (event) => console.log("onmessage", event);
-    // this._channelG.onclose = (event) => console.debug("onclose", { event });
-    // this._channelG.onerror = (event) => console.debug("onerror", { event });
-    // this._channelG.onbufferedamountlow = (event) => console.debug("onbufferedamountlow", { event });
   }
 
   //
@@ -78,16 +67,39 @@ class PeerWorker {
     return this._emitter.off;
   }
 
+  //
   // Ouvidores de Eventos
+  //
+
   _onconnectionstatechange() {
     const { connectionState, iceConnectionState } = this._PC;
     console.log("Connection state change", connectionState, iceConnectionState);
     this._emitter.emit("connection-state-change", { connectionState, iceConnectionState });
   }
+
   _oniceconnectionstatechange() {
     const { connectionState, iceConnectionState } = this._PC;
     console.log("ICE connection state change", connectionState, iceConnectionState);
     this._emitter.emit("connection-state-change", { connectionState, iceConnectionState });
+  }
+
+  _dataChannelOpen() {
+    console.debug("Data channel is open.");
+  }
+
+  _dataChannelClose() {
+    console.debug("Data channel is close.");
+  }
+
+  _dataChannelMessage(event) {
+    const { data: eventData } = event;
+    console.debug("Data channel message.", { eventData });
+    const message = eventData;
+    this._emitter.emit("channel-message", { message });
+  }
+
+  _dataChannelError(event) {
+    console.debug("Data channel error.", { event });
   }
 
   async answerOffer(offerDescription) {
@@ -140,6 +152,15 @@ class PeerWorker {
     };
     this._clientSignalingServer.on("res-get-rtc-session-description-offer", resCallback);
     this._clientSignalingServer.sendGetClientRTCSessionDescriptionOffer(clientId);
+  }
+
+  sendMessage(message) {
+    this._dataChannel.send(message);
+  }
+
+  destroy() {
+    this._emitter.all.clear();
+    this._clientSignalingServer.destroy();
   }
 }
 
