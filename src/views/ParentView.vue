@@ -17,9 +17,7 @@
 // JS
 import { PeerParent } from "@/services/webrtc";
 // https://medium.com/geekculture/few-ways-to-generate-qr-code-using-javascript-54b6b5220c4f
-import qrcodejs from "qrcodejs";
 import QRious from "qrious";
-console.debug(qrcodejs);
 console.debug(QRious);
 
 export default {

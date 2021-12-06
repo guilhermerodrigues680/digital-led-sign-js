@@ -19,7 +19,16 @@ const routes = [
     redirect: "/worker/:parentId",
   },
   {
-    path: "/worker/:parentId?",
+    path: "/worker/:parentId",
+    redirect: (to) => {
+      const { parentId } = to.params;
+      return { name: "WorkerView", params: { parentId } };
+    },
+  },
+  {
+    name: "WorkerView",
+    props: true,
+    path: "/worker",
     component: () => import("@/views/WorkerView.vue"),
   },
   {
@@ -33,8 +42,8 @@ const routes = [
 ];
 
 const router = new VueRouter({
-  // mode: "history",
-  mode: "hash",
+  mode: "history",
+  // mode: "hash",
   base: process.env.BASE_URL,
   routes,
 });
