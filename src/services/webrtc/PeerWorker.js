@@ -2,6 +2,8 @@ import { SERVERS } from "./config";
 import mitt from "mitt";
 import ClientSignalingServer from "./ClientSignalingServer";
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 class PeerWorker {
   /** @type {RTCDataChannel} */
   _channelG;
@@ -102,8 +104,15 @@ class PeerWorker {
     // };
   }
 
-  answerParentOffer(clientId) {
+  async answerParentOffer(clientId) {
     console.debug("answerParentOffer", clientId);
+
+    // TODO: Aqui não aguarda um id, aguarda na verdade a conexao estável
+    // Aguarda um id do servidor de sinalizacao
+    while (!this._clientSignalingServerId) {
+      await sleep(250);
+    }
+
     const resCallback = async (offerDescription) => {
       this._clientSignalingServer.off("res-get-rtc-session-description-offer", resCallback);
       console.debug(offerDescription);

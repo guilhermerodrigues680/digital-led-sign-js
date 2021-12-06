@@ -4,9 +4,24 @@
 
     <div>
       <h2>qrcode</h2>
-      {{ qrvalueUrl }}
 
-      <canvas ref="qr"></canvas>
+      <div>
+        <div v-show="qrvalue">
+          <canvas ref="qr"></canvas>
+          <div>
+            Passos:
+            <ol>
+              <li>Escanei o código acima com seu celular</li>
+              <li>Caso seu celular não leia qrcode, acesse nossa página para leitura do qrcode</li>
+              <li>
+                Caso seu dispositivo não possua uma camera, acesse o link a partir do seu celular:
+                {{ qrvalueUrl }}
+              </li>
+            </ol>
+          </div>
+        </div>
+        <div v-show="!qrvalue">Obtendo codigo...</div>
+      </div>
 
       <button @click="createOffer()">createOffer()</button>
     </div>
@@ -24,26 +39,23 @@ export default {
   name: "ParentView",
 
   data: () => ({
-    /** @type {Array<PeerParent>} */
-    peerParentListFreeze: [null],
+    /** @type {PeerParent} */
+    peerParent: null,
     qrious: null,
     qrvalue: null,
   }),
 
   computed: {
-    peerParent() {
-      return this.peerParentListFreeze[0];
-    },
     qrvalueUrl() {
       const url = new URL(window.location.origin);
-      url.hash = `/code/${this.qrvalue}`;
+      url.pathname = `/code/${this.qrvalue}`;
       return url.href;
     },
   },
 
   mounted() {
     this.qrious = new QRious({ element: this.$refs.qr, value: "" });
-    this.peerParentListFreeze = Object.freeze([new PeerParent()]);
+    this.peerParent = new PeerParent();
     this.peerParent.on("client-id", (clientId) => (this.qrvalue = clientId));
     this.createOffer();
   },
