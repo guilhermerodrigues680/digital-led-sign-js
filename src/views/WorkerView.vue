@@ -48,8 +48,9 @@ export default {
 
   mounted() {
     this.html5QrCode = new Html5Qrcode("123456789-reader");
-    const html5QrCodeConfig = { fps: 10, qrbox: { width: 250, height: 250 } };
     if (!this.scannedParentId) {
+      // TODO: Detectar se o disposivo possui essa camera
+      const html5QrCodeConfig = { fps: 10, qrbox: { width: 250, height: 250 } };
       this.html5QrCode.start(
         { facingMode: "environment" },
         html5QrCodeConfig,
