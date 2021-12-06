@@ -11,6 +11,10 @@
     <div v-show="!scannedParentId" id="123456789-reader" width="600px"></div>
 
     <div>
+      {{ peerConnState }}
+    </div>
+
+    <div>
       {{ scannedParentId }}
     </div>
   </div>
@@ -31,6 +35,7 @@ export default {
   data: () => ({
     /** @type {PeerWorker} */
     peerWorker: null,
+    peerConnState: {},
     scannedParentId: null,
     /** @type {Html5Qrcode} */
     html5QrCode: null,
@@ -38,6 +43,7 @@ export default {
 
   created() {
     this.peerWorker = new PeerWorker();
+    this.peerWorker.on("connection-state-change", (connState) => (this.peerConnState = connState));
     if (this.validateParentId(this.parentId)) {
       this.scannedParentId = this.parentId;
     } else {

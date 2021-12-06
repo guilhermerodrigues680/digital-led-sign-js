@@ -66,12 +66,28 @@ class PeerWorker {
     // this._channelG.onbufferedamountlow = (event) => console.debug("onbufferedamountlow", { event });
   }
 
-  // Ouvidores de Eventos
-  _onconnectionstatechange(event) {
-    console.log("onconnectionstatechange", { event }, this._PC.connectionState);
+  //
+  // Atributos get/set
+  //
+
+  get on() {
+    return this._emitter.on;
   }
-  _oniceconnectionstatechange(event) {
-    console.log("oniceconnectionstatechange", { event }, this._PC.iceConnectionState);
+
+  get off() {
+    return this._emitter.off;
+  }
+
+  // Ouvidores de Eventos
+  _onconnectionstatechange() {
+    const { connectionState, iceConnectionState } = this._PC;
+    console.log("Connection state change", connectionState, iceConnectionState);
+    this._emitter.emit("connection-state-change", { connectionState, iceConnectionState });
+  }
+  _oniceconnectionstatechange() {
+    const { connectionState, iceConnectionState } = this._PC;
+    console.log("ICE connection state change", connectionState, iceConnectionState);
+    this._emitter.emit("connection-state-change", { connectionState, iceConnectionState });
   }
 
   async answerOffer(offerDescription) {

@@ -6,6 +6,10 @@
       <h2>qrcode</h2>
 
       <div>
+        {{ peerConnState }}
+      </div>
+
+      <div>
         <div v-show="qrvalue">
           <canvas ref="qr"></canvas>
           <div>
@@ -41,6 +45,7 @@ export default {
   data: () => ({
     /** @type {PeerParent} */
     peerParent: null,
+    peerConnState: {},
     qrious: null,
     qrvalue: null,
   }),
@@ -57,6 +62,7 @@ export default {
     this.qrious = new QRious({ element: this.$refs.qr, value: "" });
     this.peerParent = new PeerParent();
     this.peerParent.on("client-id", (clientId) => (this.qrvalue = clientId));
+    this.peerParent.on("connection-state-change", (connState) => (this.peerConnState = connState));
     this.createOffer();
   },
 

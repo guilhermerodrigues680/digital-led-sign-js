@@ -66,11 +66,15 @@ class PeerParent {
   }
 
   // Ouvidores de Eventos
-  _onconnectionstatechange(event) {
-    console.log("onconnectionstatechange", { event }, this._PC.connectionState);
+  _onconnectionstatechange() {
+    const { connectionState, iceConnectionState } = this._PC;
+    console.log("Connection state change", connectionState, iceConnectionState);
+    this._emitter.emit("connection-state-change", { connectionState, iceConnectionState });
   }
-  _oniceconnectionstatechange(event) {
-    console.log("oniceconnectionstatechange", { event }, this._PC.iceConnectionState);
+  _oniceconnectionstatechange() {
+    const { connectionState, iceConnectionState } = this._PC;
+    console.log("ICE connection state change", connectionState, iceConnectionState);
+    this._emitter.emit("connection-state-change", { connectionState, iceConnectionState });
   }
 
   async _createOffer() {
